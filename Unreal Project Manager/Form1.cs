@@ -39,6 +39,7 @@ namespace Unreal_Project_Manager
         }
         Settings settings;
         ProjectSettings projectSettings;
+        int ProjectIndex;
 
         private void TS_Open_Click(object sender, EventArgs e)
         {
@@ -67,20 +68,38 @@ namespace Unreal_Project_Manager
         {
             string[] files = Directory.GetFiles(inpath, "*", SearchOption.AllDirectories);
             treeView1.Nodes.Clear();
+            bool setting = false;
 
             foreach (string file in files)
             {
                 if (file.Contains("UPMProjectSettings.yaml"))
                 {
                     projectSettings = ProjectSettings.Read(file);
+                    if (projectSettings.ProjectPath == null)
+                        projectSettings.ProjectPath = inpath;
+
+                    settings.Projects.Add(projectSettings);
+                    ProjectIndex = settings.Projects.Count;
+
                     richTextBox1.AppendText("Loaded Project Settings from Directory\n");
+                    setting = true;
+                    Settings.Save(settings);
+                    richTextBox1.AppendText("Stored Project Settings in Global Settings\n");
+                    File.Delete(file);
+                    richTextBox1.AppendText("Removed Project Settings from Directory\n");
                     continue;
                 }
                 treeView1.Nodes.Add(file.Replace($"{inpath}\\", ""), file.Replace($"{inpath}\\", ""));
             }
+            if (!setting && settings.Projects.Contains(settings.Projects.FirstOrDefault(x => x.ProjectPath == inpath)))
+            {
+                ProjectIndex = settings.Projects.IndexOf(settings.Projects.First(x => x.ProjectPath == inpath));
+                projectSettings = settings.Projects.First(x => x.ProjectPath == inpath);
+                richTextBox1.AppendText("Loaded Project from Settings\n");
+            }
 
             if (projectSettings == null)
-                projectSettings = new ProjectSettings();
+                projectSettings = new ProjectSettings() { ProjectPath = inpath };
             ProtectFiles();
         }
 
@@ -287,7 +306,13 @@ namespace Unreal_Project_Manager
                 treeView1.SelectedNode.Text = treeView1.SelectedNode.Text + "*";
                 projectSettings.ProtectedFiles.Add(treeView1.SelectedNode.Name);
             }
-            ProjectSettings.Save(projectSettings, textBox1.Text);
+            
+            if (!settings.Projects.Contains(settings.Projects.FirstOrDefault(x => x.ProjectPath == projectSettings.ProjectPath)))
+            {
+                settings.Projects.Add(projectSettings);
+                ProjectIndex = settings.Projects.Count;
+            }
+            Settings.Save(settings);
         }
 
         private void button6_Click_1(object sender, EventArgs e)

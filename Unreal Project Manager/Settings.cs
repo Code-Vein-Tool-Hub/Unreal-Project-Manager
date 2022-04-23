@@ -11,6 +11,7 @@ namespace Unreal_Project_Manager
     public class Settings
     {
         public string BasePath { get; set; }
+        public List<ProjectSettings> Projects { get; set; } = new List<ProjectSettings>();
 
         public static void Save(Settings settings)
         {
@@ -30,6 +31,7 @@ namespace Unreal_Project_Manager
 
     public class ProjectSettings
     {
+        public string ProjectPath { get; set; }
         public List<string> ProtectedFiles { get; set; } = new List<string>();
 
         public static void Save(ProjectSettings settings, string outpath)
